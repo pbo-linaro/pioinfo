@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-cl main.cpp /nologo /MD # ucrt
+cl main.cpp /nologo /EHsc /MD # ucrt
 #https://learn.microsoft.com/en-us/cpp/c-runtime-library/crt-library-features?view=msvc-170
 ./main.exe 
 

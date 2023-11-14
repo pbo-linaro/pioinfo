@@ -2,10 +2,13 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <cassert>
+#include <iostream>
 
 #include <fcntl.h>
 #include <io.h>
 #include <windows.h>
+#include <psapi.h>
 
 
 #define RUBY_MSVCRT_VERSION 200
@@ -23,7 +26,25 @@ static FARPROC get_proc_address(const char *module, const char *func,
   if (!h)
     return NULL;
 
+  char buffer[1024];
+  auto wrote = GetModuleFileName(h, buffer, 1024);
+  assert(wrote > 0);
+
+  MODULEINFO modinfo;
+  auto res = GetModuleInformation(GetCurrentProcess(), h, &modinfo, sizeof(MODULEINFO));
+  assert(res != 0);
+  auto base_address_dll = modinfo.lpBaseOfDll;
+
+  std::cout << "DLL: " << buffer << " | loaded at 0x" << std::hex <<
+      base_address_dll << '\n';
+
   ptr = GetProcAddress(h, func);
+
+  auto offset = (uint8_t*)ptr - base_address_dll;
+
+  std::cout << func << ": 0x" << std::hex << ptr << '\n';
+  std::cout << func << " offset:" << "0x" << std::hex << offset << '\n'; 
+
   if (mh) {
     if (ptr)
       *mh = h;
