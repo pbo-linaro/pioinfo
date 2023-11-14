@@ -1,4 +1,36 @@
+#include <cstdint>
+#include <cstdio>
+
+#include <windows.h>
+#include <io.h>
+#include <fcntl.h>
+
+#define RUBY_MSVCRT_VERSION 200
+
 /* License: Ruby's */
+static FARPROC
+get_proc_address(const char *module, const char *func, HANDLE *mh)
+{
+    HANDLE h;
+    FARPROC ptr;
+
+    if (mh)
+        h = LoadLibrary(module);
+    else
+        h = GetModuleHandle(module);
+    if (!h)
+        return NULL;
+
+    ptr = GetProcAddress(h, func);
+    if (mh) {
+        if (ptr)
+            *mh = h;
+        else
+            FreeLibrary(h);
+    }
+    return ptr;
+}
+
 #if RUBY_MSVCRT_VERSION >= 140
 typedef char lowio_text_mode;
 typedef char lowio_pipe_lookahead[3];
@@ -156,3 +188,8 @@ set_pioinfo_extra(void)
 #else
 #define pioinfo_extra 0
 #endif
+
+int main()
+{
+    set_pioinfo_extra();
+}
