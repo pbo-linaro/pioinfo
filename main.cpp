@@ -1,9 +1,12 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <cstdint>
 #include <cstdio>
 
 #include <fcntl.h>
 #include <io.h>
 #include <windows.h>
+
 
 #define RUBY_MSVCRT_VERSION 200
 
