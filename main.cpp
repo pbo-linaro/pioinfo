@@ -11,7 +11,7 @@
 static FARPROC
 get_proc_address(const char *module, const char *func, HANDLE *mh)
 {
-    HANDLE h;
+    HMODULE h;
     FARPROC ptr;
 
     if (mh)
@@ -75,7 +75,6 @@ extern "C" _CRTIMP ioinfo * __pioinfo[];
 #define IOINFO_L2E 5
 #endif
 static inline ioinfo* _pioinfo(int);
-
 
 #define IOINFO_ARRAY_ELTS	(1 << IOINFO_L2E)
 #define _osfhnd(i)  (_pioinfo(i)->osfhnd)
@@ -188,6 +187,14 @@ set_pioinfo_extra(void)
 #else
 #define pioinfo_extra 0
 #endif
+
+static inline ioinfo*
+_pioinfo(int fd)
+{
+    const size_t sizeof_ioinfo = sizeof(ioinfo) + pioinfo_extra;
+    return (ioinfo*)((char*)__pioinfo[fd >> IOINFO_L2E] +
+                     (fd & (IOINFO_ARRAY_ELTS - 1)) * sizeof_ioinfo);
+}
 
 int main()
 {
