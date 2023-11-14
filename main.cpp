@@ -207,6 +207,7 @@ found:
 
   if (pioinfo_extra > 64) {
     /* not found, maybe something wrong... */
+    _exit(1);
     pioinfo_extra = 0;
   }
 }
