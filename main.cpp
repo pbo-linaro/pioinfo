@@ -211,6 +211,8 @@ found:
     _exit(1);
     pioinfo_extra = 0;
   }
+
+  std::cout << "pioinfo_extra: " << pioinfo_extra << '\n'; 
 }
 #else
 #define pioinfo_extra 0
