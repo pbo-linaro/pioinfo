@@ -207,7 +207,7 @@ found:
 
   if (pioinfo_extra > 64) {
     /* not found, maybe something wrong... */
-    fprintf("pioinfo_extra not found\n");
+    std::cout << "pioinfo_extra not found\n";
     _exit(1);
     pioinfo_extra = 0;
   }
