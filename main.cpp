@@ -10,6 +10,13 @@
 #include <windows.h>
 #include <psapi.h>
 
+void* dll_base_address;
+
+template <typename T>
+static uint64_t offset(T* addr)
+{
+    return (uint8_t*)addr - (uint8_t*)dll_base_address;
+}
 
 #define RUBY_MSVCRT_VERSION 200
 
@@ -33,17 +40,15 @@ static FARPROC get_proc_address(const char *module, const char *func,
   MODULEINFO modinfo;
   auto res = GetModuleInformation(GetCurrentProcess(), h, &modinfo, sizeof(MODULEINFO));
   assert(res != 0);
-  auto base_address_dll = modinfo.lpBaseOfDll;
+  dll_base_address = modinfo.lpBaseOfDll;
 
   std::cout << "DLL: " << buffer << " | loaded at 0x" << std::hex <<
-      base_address_dll << '\n';
+      dll_base_address << '\n';
 
   ptr = GetProcAddress(h, func);
 
-  auto offset = (uint8_t*)ptr - base_address_dll;
-
   std::cout << func << ": 0x" << std::hex << ptr << '\n';
-  std::cout << func << " offset:" << "0x" << std::hex << offset << '\n'; 
+  std::cout << func << " offset:" << "0x" << std::hex << offset(ptr) << '\n'; 
 
   if (mh) {
     if (ptr)
@@ -171,7 +176,7 @@ static void set_pioinfo_extra(void) {
            ) &&
           *(pend + (sizeof(FUNCTION_BEFORE_RET_MARK) - 1) +
             FUNCTION_SKIP_BYTES) == (char)FUNCTION_RET) {
-        std::cout << "end of symbol isatty at: 0x" << std::hex << (void*)pend << '\n'; 
+        std::cout << "end of symbol isatty at: 0x" << std::hex << offset(pend) << '\n'; 
         // search backwards from end of function
         for (pend -= (sizeof(PIOINFO_MARK) - 1); pend > p; pend--) {
           if (memcmp(pend, PIOINFO_MARK, sizeof(PIOINFO_MARK) - 1) == 0) {
@@ -187,7 +192,7 @@ static void set_pioinfo_extra(void) {
   _exit(1);
 
 found:
-  std::cout << "found pinfo mark '" << PIOINFO_MARK << "' at: 0x" << std::hex << (void*)p;
+  std::cout << "found pinfo mark '" << PIOINFO_MARK << "' at: 0x" << std::hex << offset(p);
   p += sizeof(PIOINFO_MARK) - 1;
 #ifdef _WIN64
   rel = *(int32_t *)(p);
