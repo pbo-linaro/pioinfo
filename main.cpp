@@ -199,6 +199,7 @@ found:
   std::cout << "pointer on pioinfo: 0x" << std::hex << *(int32_t*)p << '\n';
   rip = p + sizeof(int32_t);
   __pioinfo = (ioinfo **)(rip + rel);
+  std::cout << "pioinfo offset: 0x" << offset(__pioinfo) << '\n';
 #else
   __pioinfo = *(ioinfo ***)(p);
 #endif
