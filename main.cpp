@@ -158,6 +158,7 @@ static void set_pioinfo_extra(void) {
   /* mov eax,dword ptr [eax*4+100EB430h] */
 #define PIOINFO_MARK "\x8B\x04\x85"
 #endif
+  assert(p);
   if (p) {
     for (pend += 10; pend < p + 500; pend++) {
       // find end of function
@@ -170,6 +171,7 @@ static void set_pioinfo_extra(void) {
            ) &&
           *(pend + (sizeof(FUNCTION_BEFORE_RET_MARK) - 1) +
             FUNCTION_SKIP_BYTES) == (char)FUNCTION_RET) {
+        std::cout << "end of symbol isatty at: 0x" << std::hex << pend; 
         // search backwards from end of function
         for (pend -= (sizeof(PIOINFO_MARK) - 1); pend > p; pend--) {
           if (memcmp(pend, PIOINFO_MARK, sizeof(PIOINFO_MARK) - 1) == 0) {
