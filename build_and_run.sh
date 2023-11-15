@@ -4,6 +4,7 @@ set -euo pipefail
 
 llvm-objdump --disassemble-symbols=_isatty C:/Windows/System32/ucrtbase.dll
 echo "----------------------"
+# https://github.com/ajkhoury/pdbfetch
 ./pdbfetch C:/Windows/System32/ucrtbase.dll pdb
 mv pdb/ucrtbase.pdb/*/ucrtbase.pdb .
 echo "----------------------"
