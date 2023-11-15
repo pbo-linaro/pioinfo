@@ -185,6 +185,7 @@ static void set_pioinfo_extra(void) {
   _exit(1);
 
 found:
+  std::cout << "found pinfo mark '" << PIOINFO_MARK << "' at: 0x" << std::hex << p;
   p += sizeof(PIOINFO_MARK) - 1;
 #ifdef _WIN64
   rel = *(int32_t *)(p);
