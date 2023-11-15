@@ -196,6 +196,7 @@ found:
   p += sizeof(PIOINFO_MARK) - 1;
 #ifdef _WIN64
   rel = *(int32_t *)(p);
+  std::cout << "pointer on pioinfo" << std::hex << *(int32_t*)p;
   rip = p + sizeof(int32_t);
   __pioinfo = (ioinfo **)(rip + rel);
 #else
