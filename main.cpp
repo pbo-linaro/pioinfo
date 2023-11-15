@@ -171,7 +171,7 @@ static void set_pioinfo_extra(void) {
            ) &&
           *(pend + (sizeof(FUNCTION_BEFORE_RET_MARK) - 1) +
             FUNCTION_SKIP_BYTES) == (char)FUNCTION_RET) {
-        std::cout << "end of symbol isatty at: 0x" << std::hex << pend; 
+        std::cout << "end of symbol isatty at: 0x" << std::hex << pend << '\n'; 
         // search backwards from end of function
         for (pend -= (sizeof(PIOINFO_MARK) - 1); pend > p; pend--) {
           if (memcmp(pend, PIOINFO_MARK, sizeof(PIOINFO_MARK) - 1) == 0) {
