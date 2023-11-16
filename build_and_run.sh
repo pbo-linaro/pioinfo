@@ -16,9 +16,10 @@ echo "----------------------"
 [ -f ucrtbase.pdb ] || ./pdbfetch C:/Windows/System32/ucrtbase.dll pdb
 [ -f ucrtbased.pdb ] || ./pdbfetch C:/Windows/System32/ucrtbased.dll pdb
 rsync -av pdb/*/*/*.pdb .
-echo "Address for pioinfo symbol (from pdb file)"
-llvm-pdbutil pretty ucrtbase.pdb --all | grep pioinfo
-llvm-pdbutil pretty ucrtbased.pdb --all | grep pioinfo
+echo "----------------------"
+llvm-pdbutil pretty ucrtbase.pdb --include-symbols=__pioinfo --externals
+echo "----------------------"
+llvm-pdbutil pretty ucrtbased.pdb --include-symbols=__pioinfo --externals 
 echo "----------------------"
 file pioinfo.exe
 file pioinfo_debug.exe
