@@ -1,3 +1,4 @@
-/main*
-*pdb*
-/pioinfo*
+main*
+ucrtbase*
+pdb
+pioinfo*

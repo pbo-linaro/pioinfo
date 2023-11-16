@@ -8,9 +8,9 @@ cl main.cpp /nologo /EHsc /MDd /Fe:pioinfo_debug.exe
 # /MD, /MDd to target ucrt
 #https://learn.microsoft.com/en-us/cpp/c-runtime-library/crt-library-features?view=msvc-170
 echo "----------------------"
-llvm-objdump --disassemble-symbols=_isatty C:/Windows/System32/ucrtbase.dll
+llvm-objdump --disassemble-symbols=_isatty C:/Windows/System32/ucrtbase.dll | tee ucrtbase.disas
 echo "----------------------"
-llvm-objdump --disassemble-symbols=_isatty C:/Windows/System32/ucrtbased.dll
+llvm-objdump --disassemble-symbols=_isatty C:/Windows/System32/ucrtbased.dll | tee ucrtbased.disas
 echo "----------------------"
 # https://github.com/ajkhoury/pdbfetch
 [ -f ucrtbase.pdb ] || ./pdbfetch C:/Windows/System32/ucrtbase.dll pdb
