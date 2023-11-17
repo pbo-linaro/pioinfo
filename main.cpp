@@ -172,7 +172,7 @@ static void set_pioinfo_extra(void) {
     _exit(1);
   }
 
-  /* We now point to those instructions that load address of __pioinfo:
+  /* We now point to instructions that load address of __pioinfo:
    * adrp	x8, 0x1801d8000
    * add	x8, x8, #0xdb0
    * https://devblogs.microsoft.com/oldnewthing/20220809-00/?p=106955
@@ -191,7 +191,7 @@ static void set_pioinfo_extra(void) {
   std::cout << "adrp_imm: " << std::hex << adrp_imm << '\n';
   std::cout << "adrp_base: " << std::hex << adrp_base << '\n';
 
-  auto found = 0;
+  auto found = adrp_base + 0xdb0;
   __pioinfo = (ioinfo**)((uint64_t)dll_base_address + 0x001d8db0);
   std::cout << "found: " << found << '\n';
   std::cout << "expected: " << std::hex << (uint64_t)__pioinfo << '\n';
