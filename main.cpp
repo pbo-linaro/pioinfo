@@ -146,7 +146,7 @@ static void set_pioinfo_extra(void) {
   uint32_t* end_limit = (start + max_num_inst);
   uint32_t* rip = start;
 
-#define IS_INST(rip, name) ((*(rip) & inst_##name##_mask) == inst_##name##_mask)
+#define IS_INST(rip, mask) ((*(rip) & mask) == mask)
 /* N_LEAST_BITS(3) == 0b111 */
 #define N_LEAST_BITS(num_bits) (~(~(uint64_t)0 << num_bits))
 
@@ -156,9 +156,9 @@ static void set_pioinfo_extra(void) {
   }
 
   /* end of function */
-  const uint32_t inst_ret_mask = 0xd65f0000;
+  const uint32_t ret_mask = 0xd65f0000;
   for(; rip < end_limit; rip++) {
-      if (IS_INST(rip, ret)) {
+      if (IS_INST(rip, ret_mask)) {
           break;
       }
   }
@@ -169,9 +169,9 @@ static void set_pioinfo_extra(void) {
   std::cout << "end is " << std::hex << offset(rip) << '\n';
 
   /* pioinfo instruction mark */
-  const uint32_t inst_adrp_mask = 0x90000000;
+  const uint32_t adrp_mask = 0x90000000;
   for(; rip > start; rip--) {
-      if (IS_INST(rip, adrp)) {
+      if (IS_INST(rip, adrp_mask)) {
           break;
       }
   }
