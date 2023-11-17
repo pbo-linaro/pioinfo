@@ -26,4 +26,4 @@ file pioinfo_debug.exe
 echo "----------------------"
 ./pioinfo.exe || true
 echo "----------------------"
-./pioinfo_debug.exe || true
+#./pioinfo_debug.exe || true

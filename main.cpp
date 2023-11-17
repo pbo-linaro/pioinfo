@@ -141,32 +141,58 @@ static void set_pioinfo_extra(void) {
   /* _osfile(fh) & FDEV */
 
 #ifdef _M_ARM64
-  if (!p) {
-    fprintf(stderr, "_isatty proc is not found in " UCRTBASE "\n");
-    _exit(1);
-  }
-
   const int max_num_inst = 500;
-  const uint32_t ret = 0xd65f03c0;
   uint32_t* start = (uint32_t*)p;
   uint32_t* end_limit = (start + max_num_inst);
-  uint32_t* pend = start;
-  for(; *pend != ret && pend < end_limit; pend++);
+  uint32_t* rip = start;
 
-  if (pend == end_limit) {
-    fprintf(stderr, "end of _isatty can't be found in " UCRTBASE "\n");
+#define IS_INST(rip, name) ((*(rip) & inst_##name##_mask) == inst_##name##_mask)
+/* N_LEAST_BITS(3) == 0b111 */
+#define N_LEAST_BITS(num_bits) (~(~(uint64_t)0 << num_bits))
+
+  if (!p) {
+    fprintf(stderr, "_isatty proc not found in " UCRTBASE "\n");
     _exit(1);
   }
 
-  for(; pend > start; pend--) {
+  /* end of function */
+  const uint32_t inst_ret_mask = 0xd65f0000;
+  for(; !IS_INST(rip, ret) && rip < end_limit; rip++);
+  if (rip == end_limit) {
+    fprintf(stderr, "end of _isatty not found in " UCRTBASE "\n");
+    _exit(1);
   }
+  std::cout << "end is " << std::hex << offset(rip) << '\n';
 
-  if(pend == start) {
-    fprintf(stderr, "pioinfo mark can't be found in found in " UCRTBASE "\n");
+  /* pioinfo instruction mark */
+  const uint32_t inst_adrp_mask = 0x90000000;
+  for(; !IS_INST(rip, adrp) && rip > start; rip--);
+  if(rip == start) {
+    fprintf(stderr, "pioinfo mark not found in " UCRTBASE "\n");
     _exit(1);
   }
 
-  __pioinfo = NULL;
+  /* We now point to those instructions:
+   * adrp	x8, 0x1801d8000
+   * add	x8, x8, #0xdb0
+   * __pioinfo is at sum of offsets regarding start of DLL
+   */
+
+  const uint32_t adrp_immhi_pos = 29;
+  const uint32_t adrp_immhi_mask = N_LEAST_BITS(2) << adrp_immhi_pos;
+  const uint32_t adrp_immlo_pos = 5;
+  const uint32_t adrp_immlo_numbits = 19;
+  const uint32_t adrp_immlo_mask = N_LEAST_BITS(adrp_immlo_numbits) << adrp_immlo_pos;
+  const uint64_t adrp_immlo = ((*rip & adrp_immlo_mask) >> adrp_immlo_pos); 
+  const uint64_t adrp_immhi = ((*rip & adrp_immhi_mask) >> adrp_immhi_pos); 
+  /* imm = immhi:immlo:Zeros(12), 64 */
+  const uint64_t adrp_imm = ((adrp_immhi << adrp_immlo_numbits) + adrp_immlo) << 12;
+  /* base = PC64<63:12>:Zeros(12) */
+  const uint64_t adrp_base = (uint64_t)rip & ~N_LEAST_BITS(12);
+  std::cout << "adrp_imm: " << std::hex << adrp_imm << '\n';
+  std::cout << "adrp_base: " << std::hex << adrp_base << '\n';
+
+  __pioinfo = (ioinfo**)((uint64_t)dll_base_address + 0x001d8db0);
 
 #else /* _M_ARM64 */
 
