@@ -117,7 +117,12 @@ static size_t pioinfo_extra = 0; /* workaround for VC++8 SP1 */
 /* License: Ruby's */
 static void set_pioinfo_extra(void) {
 #if RUBY_MSVCRT_VERSION >= 140
+#ifdef _M_ARM64
+#define FUNCTION_RET 0xc0 /* 0xd65f03c0: ret */
+#else
 #define FUNCTION_RET 0xc3 /* ret */
+#endif
+
 #ifdef _DEBUG
 #define UCRTBASE "ucrtbased.dll"
 #else
@@ -140,7 +145,12 @@ static void set_pioinfo_extra(void) {
   char *pend = p;
   /* _osfile(fh) & FDEV */
 
-#ifdef _WIN64
+#ifdef _M_ARM64
+#define FUNCTION_BEFORE_RET_MARK "\xd6\x5f\x03" /* ret */
+#define FUNCTION_SKIP_BYTES 0
+/* 0xf0001348 adrp x8, 0x1803a1000 */
+#define PIOINFO_MARK "\xf0\x00\x13\x48"
+#elif defined _WIN64
   int32_t rel;
   char *rip;
   /* add rsp, _ */
@@ -149,7 +159,7 @@ static void set_pioinfo_extra(void) {
 #ifdef _DEBUG
   /* lea rcx,[__pioinfo's addr in RIP-relative 32bit addr] */
 #define PIOINFO_MARK "\x48\x8d\x0d"
-#else
+#else /* x86 */
   /* lea rdx,[__pioinfo's addr in RIP-relative 32bit addr] */
 #define PIOINFO_MARK "\x48\x8d\x15"
 #endif
@@ -194,13 +204,14 @@ static void set_pioinfo_extra(void) {
 found:
   std::cout << "found pinfo mark at: 0x" << std::hex << offset(p) << '\n';
   p += sizeof(PIOINFO_MARK) - 1;
-#ifdef _WIN64
+#ifdef _M_ARM64
+#elif defined _WIN64
   rel = *(int32_t *)(p);
   std::cout << "pointer on pioinfo: 0x" << std::hex << *(int32_t*)p << '\n';
   rip = p + sizeof(int32_t);
   __pioinfo = (ioinfo **)(rip + rel);
   std::cout << "pioinfo offset: 0x" << offset(__pioinfo) << '\n';
-#else
+#else /* x86 */
   __pioinfo = *(ioinfo ***)(p);
 #endif
 #endif
