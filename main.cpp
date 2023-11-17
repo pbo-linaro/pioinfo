@@ -191,7 +191,10 @@ static void set_pioinfo_extra(void) {
   std::cout << "adrp_imm: " << std::hex << adrp_imm << '\n';
   std::cout << "adrp_base: " << std::hex << adrp_base << '\n';
 
+  auto found = 0;
   __pioinfo = (ioinfo**)((uint64_t)dll_base_address + 0x001d8db0);
+  std::cout << "found: " << found << '\n';
+  std::cout << "expected: " << std::hex << (uint64_t)__pioinfo << '\n';
 
 #else /* _M_ARM64 */
 
