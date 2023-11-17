@@ -157,7 +157,11 @@ static void set_pioinfo_extra(void) {
 
   /* end of function */
   const uint32_t inst_ret_mask = 0xd65f0000;
-  for(; !IS_INST(rip, ret) && rip < end_limit; rip++);
+  for(; rip < end_limit; rip++) {
+      if (IS_INST(rip, ret)) {
+          break;
+      }
+  }
   if (rip == end_limit) {
     fprintf(stderr, "end of _isatty not found in " UCRTBASE "\n");
     _exit(1);
@@ -166,7 +170,11 @@ static void set_pioinfo_extra(void) {
 
   /* pioinfo instruction mark */
   const uint32_t inst_adrp_mask = 0x90000000;
-  for(; !IS_INST(rip, adrp) && rip > start; rip--);
+  for(; rip > start; rip--) {
+      if (IS_INST(rip, adrp)) {
+          break;
+      }
+  }
   if(rip == start) {
     fprintf(stderr, "pioinfo mark not found in " UCRTBASE "\n");
     _exit(1);
