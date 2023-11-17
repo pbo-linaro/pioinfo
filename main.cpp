@@ -118,7 +118,7 @@ static size_t pioinfo_extra = 0; /* workaround for VC++8 SP1 */
 static void set_pioinfo_extra(void) {
 #if RUBY_MSVCRT_VERSION >= 140
 #ifdef _M_ARM64
-#define FUNCTION_RET 0xc0 /* 0xd65f03c0: ret */
+#define FUNCTION_RET 0xd6 /* 0xd65f03c0: ret */
 #else
 #define FUNCTION_RET 0xc3 /* ret */
 #endif
@@ -146,8 +146,13 @@ static void set_pioinfo_extra(void) {
   /* _osfile(fh) & FDEV */
 
 #ifdef _M_ARM64
-#define FUNCTION_BEFORE_RET_MARK "\xd6\x5f\x03" /* ret */
+#define FUNCTION_BEFORE_RET_MARK "\xc0\x03\x5f" /* 0xd65f03c0: ret */
 #define FUNCTION_SKIP_BYTES 0
+#ifdef _DEBUG
+#define FUNCTION_MAX_LENGTH 1000
+#else
+#define FUNCTION_MAX_LENGTH 300
+#endif
 /* 0xf0001348 adrp x8, 0x1803a1000 */
 #define PIOINFO_MARK "\xf0\x00\x13\x48"
 #elif defined _WIN64
@@ -156,6 +161,7 @@ static void set_pioinfo_extra(void) {
   /* add rsp, _ */
 #define FUNCTION_BEFORE_RET_MARK "\x48\x83\xc4"
 #define FUNCTION_SKIP_BYTES 1
+#define FUNCTION_MAX_LENGTH 300
 #ifdef _DEBUG
   /* lea rcx,[__pioinfo's addr in RIP-relative 32bit addr] */
 #define PIOINFO_MARK "\x48\x8d\x0d"
@@ -170,12 +176,13 @@ static void set_pioinfo_extra(void) {
   /* leave */
 #define FUNCTION_BEFORE_RET_MARK_2 "\xc9"
 #define FUNCTION_SKIP_BYTES 0
+#define FUNCTION_MAX_LENGTH 300
   /* mov eax,dword ptr [eax*4+100EB430h] */
 #define PIOINFO_MARK "\x8B\x04\x85"
 #endif
   assert(p);
   if (p) {
-    for (pend += 10; pend < p + 500; pend++) {
+    for (pend += 10; pend < p + FUNCTION_MAX_LENGTH; pend++) {
       // find end of function
       if ((memcmp(pend, FUNCTION_BEFORE_RET_MARK,
                   sizeof(FUNCTION_BEFORE_RET_MARK) - 1) == 0
