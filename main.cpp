@@ -172,10 +172,10 @@ static void set_pioinfo_extra(void) {
     _exit(1);
   }
 
-  /* We now point to those instructions:
+  /* We now point to those instructions that load address of __pioinfo:
    * adrp	x8, 0x1801d8000
    * add	x8, x8, #0xdb0
-   * __pioinfo is at sum of offsets regarding start of DLL
+   * https://devblogs.microsoft.com/oldnewthing/20220809-00/?p=106955
    */
   const uint32_t adrp_immhi_pos = 29;
   const uint32_t adrp_immhi_mask = N_LEAST_BITS(2) << adrp_immhi_pos;
