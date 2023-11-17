@@ -117,11 +117,7 @@ static size_t pioinfo_extra = 0; /* workaround for VC++8 SP1 */
 /* License: Ruby's */
 static void set_pioinfo_extra(void) {
 #if RUBY_MSVCRT_VERSION >= 140
-#ifdef _M_ARM64
-#define FUNCTION_RET 0xd6 /* 0xd65f03c0: ret */
-#else
-#define FUNCTION_RET 0xc3 /* ret */
-#endif
+#define FUNCTION_RET 0xc3
 
 #ifdef _DEBUG
 #define UCRTBASE "ucrtbased.dll"
@@ -142,20 +138,40 @@ static void set_pioinfo_extra(void) {
    * * https://bugs.ruby-lang.org/issues/18605
    */
   char *p = (char *)get_proc_address(UCRTBASE, "_isatty", NULL);
-  char *pend = p;
   /* _osfile(fh) & FDEV */
 
 #ifdef _M_ARM64
-#define FUNCTION_BEFORE_RET_MARK "\xc0\x03\x5f" /* 0xd65f03c0: ret */
-#define FUNCTION_SKIP_BYTES 0
-#ifdef _DEBUG
-#define FUNCTION_MAX_LENGTH 1000
-#else
-#define FUNCTION_MAX_LENGTH 300
-#endif
-/* 0xf0001348 adrp x8, 0x1803a1000 */
-#define PIOINFO_MARK "\xf0\x00\x13\x48"
-#elif defined _WIN64
+  if (!p) {
+    fprintf(stderr, "_isatty proc is not found in " UCRTBASE "\n");
+    _exit(1);
+  }
+
+  const int max_num_inst = 500;
+  const uint32_t ret = 0xd65f03c0;
+  uint32_t* start = (uint32_t*)p;
+  uint32_t* end_limit = (start + max_num_inst);
+  uint32_t* pend = start;
+  for(; *pend != ret && pend < end_limit; pend++);
+
+  if (pend == end_limit) {
+    fprintf(stderr, "end of _isatty can't be found in " UCRTBASE "\n");
+    _exit(1);
+  }
+
+  for(; pend > start; pend--) {
+  }
+
+  if(pend == start) {
+    fprintf(stderr, "pioinfo mark can't be found in found in " UCRTBASE "\n");
+    _exit(1);
+  }
+
+  __pioinfo = NULL;
+
+#else /* _M_ARM64 */
+
+  char *pend = p;
+#if defined _WIN64
   int32_t rel;
   char *rip;
   /* add rsp, _ */
@@ -195,6 +211,8 @@ static void set_pioinfo_extra(void) {
             FUNCTION_SKIP_BYTES) == (char)FUNCTION_RET) {
         std::cout << "end of symbol isatty at: 0x" << std::hex << offset(pend) << '\n'; 
         // search backwards from end of function
+#ifdef _M_ARM64
+#else
         for (pend -= (sizeof(PIOINFO_MARK) - 1); pend > p; pend--) {
           if (memcmp(pend, PIOINFO_MARK, sizeof(PIOINFO_MARK) - 1) == 0) {
             p = pend;
@@ -202,6 +220,7 @@ static void set_pioinfo_extra(void) {
           }
         }
         break;
+#endif
       }
     }
   }
@@ -221,7 +240,8 @@ found:
 #else /* x86 */
   __pioinfo = *(ioinfo ***)(p);
 #endif
-#endif
+#endif /* _M_ARM64 */
+#endif /* RUBY_MSVCRT_VERSION */
   int fd;
 
   fd = _open("NUL", O_RDONLY);
