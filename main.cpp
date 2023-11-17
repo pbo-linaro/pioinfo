@@ -177,7 +177,6 @@ static void set_pioinfo_extra(void) {
    * add	x8, x8, #0xdb0
    * __pioinfo is at sum of offsets regarding start of DLL
    */
-
   const uint32_t adrp_immhi_pos = 29;
   const uint32_t adrp_immhi_mask = N_LEAST_BITS(2) << adrp_immhi_pos;
   const uint32_t adrp_immlo_pos = 5;
