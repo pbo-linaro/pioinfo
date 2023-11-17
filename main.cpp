@@ -203,6 +203,7 @@ static void set_pioinfo_extra(void) {
   __pioinfo = (ioinfo**)((uint64_t)dll_base_address + 0x001d8db0);
   std::cout << "found: " << found << '\n';
   std::cout << "expected: " << std::hex << (uint64_t)__pioinfo << '\n';
+  assert((uint64_t)__pioinfo == (uint64_t)found);
 
 #else /* _M_ARM64 */
 
