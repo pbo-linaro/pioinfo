@@ -48,7 +48,7 @@ static FARPROC get_proc_address(const char *module, const char *func,
   ptr = GetProcAddress(h, func);
 
   std::cout << func << ": 0x" << std::hex << ptr << '\n';
-  std::cout << func << " offset:" << "0x" << std::hex << offset(ptr) << '\n'; 
+  std::cout << func << " offset:" << "0x" << std::hex << offset(ptr) << '\n';
 
   if (mh) {
     if (ptr)
@@ -172,7 +172,6 @@ static void set_pioinfo_extra(void) {
   /* pioinfo instruction mark */
   const uint32_t adrp_id = 0x90000000;
   const uint32_t adrp_mask = 0x9f000000;
-  rip--;
   for(; rip > start; rip--) {
       if (IS_INSN(rip, adrp)) {
           break;
@@ -194,12 +193,12 @@ static void set_pioinfo_extra(void) {
   const uint32_t adrp_immlo_pos = 5;
   const uint32_t adrp_immlo_numbits = 19;
   const uint32_t adrp_immlo_mask = N_LEAST_BITS(adrp_immlo_numbits) << adrp_immlo_pos;
-  const uint64_t adrp_immlo = ((*rip & adrp_immlo_mask) >> adrp_immlo_pos); 
-  const uint64_t adrp_immhi = ((*rip & adrp_immhi_mask) >> adrp_immhi_pos); 
+  const uint64_t adrp_immlo = ((*rip & adrp_immlo_mask) >> adrp_immlo_pos);
+  const uint64_t adrp_immhi = ((*rip & adrp_immhi_mask) >> adrp_immhi_pos);
   /* imm = immhi:immlo:Zeros(12), 64 */
   const uint64_t adrp_imm = ((adrp_immhi << adrp_immlo_numbits) + adrp_immlo) << 12;
   /* base = PC64<63:12>:Zeros(12) */
-  const uint64_t adrp_base = (uint64_t)rip & ~N_LEAST_BITS(12);
+  const uint64_t adrp_base = (uint64_t)rip & 0xfffffffffffff000;
   std::cout << "adrp_insn: " << std::hex << adrp_insn << '\n';
   std::cout << "adrp_immlo: " << std::hex << adrp_immlo << '\n';
   std::cout << "adrp_immhi: " << std::hex << adrp_immhi << '\n';
@@ -258,7 +257,7 @@ static void set_pioinfo_extra(void) {
            ) &&
           *(pend + (sizeof(FUNCTION_BEFORE_RET_MARK) - 1) +
             FUNCTION_SKIP_BYTES) == (char)FUNCTION_RET) {
-        std::cout << "end of symbol isatty at: 0x" << std::hex << offset(pend) << '\n'; 
+        std::cout << "end of symbol isatty at: 0x" << std::hex << offset(pend) << '\n';
         // search backwards from end of function
 #ifdef _M_ARM64
 #else
@@ -309,7 +308,7 @@ found:
     pioinfo_extra = 0;
   }
 
-  std::cout << "pioinfo_extra: " << pioinfo_extra << '\n'; 
+  std::cout << "pioinfo_extra: " << pioinfo_extra << '\n';
 }
 #else
 #define pioinfo_extra 0
