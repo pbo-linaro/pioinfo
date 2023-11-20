@@ -172,8 +172,10 @@ static void set_pioinfo_extra(void) {
   /* pioinfo instruction mark */
   const uint32_t adrp_id = 0x90000000;
   const uint32_t adrp_mask = 0x9f000000;
+  const uint32_t add_id = 0x11000000;
+  const uint32_t add_mask = 0x3fc00000;
   for(; pc > start; pc--) {
-      if (IS_INSN(pc, adrp)) {
+      if (IS_INSN(pc, adrp) && IS_INSN(pc + 1, add)) {
           break;
       }
   }
@@ -187,7 +189,7 @@ static void set_pioinfo_extra(void) {
    * add	x8, x8, #0xdb0
    * https://devblogs.microsoft.com/oldnewthing/20220809-00/?p=106955
    */
-  uint32_t adrp_insn = *pc;
+  const uint32_t adrp_insn = *pc;
   const uint32_t adrp_immhi = (adrp_insn & 0x00ffffe0) >> 5;
   const uint32_t adrp_immlo = (adrp_insn & 0x60000000) >> (5 + 19 + 5);
   /* imm = immhi:immlo:Zeros(12), 64 */
@@ -195,12 +197,14 @@ static void set_pioinfo_extra(void) {
   /* base = PC64<63:12>:Zeros(12) */
   const uint64_t adrp_base = (uint64_t)pc & 0xfffffffffffff000;
 
-  auto found = adrp_base + adrp_imm + 0xdb0;
-  __pioinfo = (ioinfo**)((uint64_t)dll_base_address + 0x001d8db0);
-  std::cout << "found: " << found << '\n';
-  std::cout << "expected: " << std::hex << (uint64_t)__pioinfo << '\n';
-  assert(found == (uint64_t)__pioinfo);
+  const uint32_t add_insn = *(pc + 1);
+  const uint32_t add_sh = (add_insn & 0x400000) >> (12 + 5 + 5);
+  /* case sh of
+    when '0' imm = ZeroExtend(imm12, datasize);
+    when '1' imm = ZeroExtend(imm12:Zeros(12), datasize); */
+  const uint64_t add_imm = ((add_insn & 0x3ffc00) >> (5 + 5)) << (add_sh ? 12 : 0);
 
+  __pioinfo = (ioinfo**)(adrp_base + adrp_imm + add_imm);
 #else /* _M_ARM64 */
   char *pend = p;
 #if defined _WIN64
