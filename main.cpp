@@ -187,16 +187,11 @@ static void set_pioinfo_extra(void) {
    * add	x8, x8, #0xdb0
    * https://devblogs.microsoft.com/oldnewthing/20220809-00/?p=106955
    */
-  const uint32_t adrp_insn = *rip;
-  const uint32_t adrp_immhi_pos = 29;
-  const uint32_t adrp_immhi_mask = N_LEAST_BITS(2) << adrp_immhi_pos;
-  const uint32_t adrp_immlo_pos = 5;
-  const uint32_t adrp_immlo_numbits = 19;
-  const uint32_t adrp_immlo_mask = N_LEAST_BITS(adrp_immlo_numbits) << adrp_immlo_pos;
-  const uint64_t adrp_immlo = ((*rip & adrp_immlo_mask) >> adrp_immlo_pos);
-  const uint64_t adrp_immhi = ((*rip & adrp_immhi_mask) >> adrp_immhi_pos);
+  uint32_t adrp_insn = *rip;
+  const uint32_t adrp_immhi = (adrp_insn & 0x00ffffe0) >> 5;
+  const uint32_t adrp_immlo = (adrp_insn & 0x60000000) >> (5 + 19 + 5);
   /* imm = immhi:immlo:Zeros(12), 64 */
-  const uint64_t adrp_imm = ((adrp_immhi << adrp_immlo_numbits) + adrp_immlo) << 12;
+  const uint64_t adrp_imm = ((adrp_immhi << 2) | adrp_immlo) << 12;
   /* base = PC64<63:12>:Zeros(12) */
   const uint64_t adrp_base = (uint64_t)rip & 0xfffffffffffff000;
   std::cout << "adrp_insn: " << std::hex << adrp_insn << '\n';
@@ -207,14 +202,14 @@ static void set_pioinfo_extra(void) {
 
   assert(adrp_insn == 0xb0000e28);
   assert(adrp_immlo == 0x1);
-  assert(adrp_immhi == 0x1c4);
+  assert(adrp_immhi == 0x71);
   assert(adrp_imm == 0x1c5000);
 
-  auto found = adrp_base + 0xdb0;
+  auto found = adrp_base + adrp_imm + 0xdb0;
   __pioinfo = (ioinfo**)((uint64_t)dll_base_address + 0x001d8db0);
   std::cout << "found: " << found << '\n';
   std::cout << "expected: " << std::hex << (uint64_t)__pioinfo << '\n';
-  assert((uint64_t)__pioinfo == (uint64_t)found);
+  assert(found == (uint64_t)__pioinfo);
 
 #else /* _M_ARM64 */
 
