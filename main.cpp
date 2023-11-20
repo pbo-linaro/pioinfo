@@ -194,16 +194,6 @@ static void set_pioinfo_extra(void) {
   const uint64_t adrp_imm = ((adrp_immhi << 2) | adrp_immlo) << 12;
   /* base = PC64<63:12>:Zeros(12) */
   const uint64_t adrp_base = (uint64_t)rip & 0xfffffffffffff000;
-  std::cout << "adrp_insn: " << std::hex << adrp_insn << '\n';
-  std::cout << "adrp_immlo: " << std::hex << adrp_immlo << '\n';
-  std::cout << "adrp_immhi: " << std::hex << adrp_immhi << '\n';
-  std::cout << "adrp_imm: " << std::hex << adrp_imm << '\n';
-  std::cout << "adrp_base: " << std::hex << adrp_base << '\n';
-
-  assert(adrp_insn == 0xb0000e28);
-  assert(adrp_immlo == 0x1);
-  assert(adrp_immhi == 0x71);
-  assert(adrp_imm == 0x1c5000);
 
   auto found = adrp_base + adrp_imm + 0xdb0;
   __pioinfo = (ioinfo**)((uint64_t)dll_base_address + 0x001d8db0);
