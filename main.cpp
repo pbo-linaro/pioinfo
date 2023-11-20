@@ -146,7 +146,7 @@ static void set_pioinfo_extra(void) {
   uint32_t* end_limit = (start + max_num_inst);
   uint32_t* rip = start;
 
-#define IS_INST(rip, mask) ((*(rip) & mask) == mask)
+#define IS_INSN(rip, name) ((*(rip) & name##_mask) == name##_id)
 /* N_LEAST_BITS(3) == 0b111 */
 #define N_LEAST_BITS(num_bits) (~(~(uint64_t)0 << num_bits))
 
@@ -156,9 +156,10 @@ static void set_pioinfo_extra(void) {
   }
 
   /* end of function */
-  const uint32_t ret_mask = 0xd65f0000;
+  const uint32_t ret_id= 0xd65f0000;
+  const uint32_t ret_mask = 0xfffffc1f;
   for(; rip < end_limit; rip++) {
-      if (IS_INST(rip, ret_mask)) {
+      if (IS_INSN(rip, ret)) {
           break;
       }
   }
@@ -169,9 +170,11 @@ static void set_pioinfo_extra(void) {
   std::cout << "end is " << std::hex << offset(rip) << '\n';
 
   /* pioinfo instruction mark */
-  const uint32_t adrp_mask = 0x90000000;
+  const uint32_t adrp_id = 0x90000000;
+  const uint32_t adrp_mask = 0x9f000000;
+  rip--;
   for(; rip > start; rip--) {
-      if (IS_INST(rip, adrp_mask)) {
+      if (IS_INSN(rip, adrp)) {
           break;
       }
   }
@@ -185,6 +188,7 @@ static void set_pioinfo_extra(void) {
    * add	x8, x8, #0xdb0
    * https://devblogs.microsoft.com/oldnewthing/20220809-00/?p=106955
    */
+  const uint32_t adrp_insn = *rip;
   const uint32_t adrp_immhi_pos = 29;
   const uint32_t adrp_immhi_mask = N_LEAST_BITS(2) << adrp_immhi_pos;
   const uint32_t adrp_immlo_pos = 5;
@@ -196,8 +200,16 @@ static void set_pioinfo_extra(void) {
   const uint64_t adrp_imm = ((adrp_immhi << adrp_immlo_numbits) + adrp_immlo) << 12;
   /* base = PC64<63:12>:Zeros(12) */
   const uint64_t adrp_base = (uint64_t)rip & ~N_LEAST_BITS(12);
+  std::cout << "adrp_insn: " << std::hex << adrp_insn << '\n';
+  std::cout << "adrp_immlo: " << std::hex << adrp_immlo << '\n';
+  std::cout << "adrp_immhi: " << std::hex << adrp_immhi << '\n';
   std::cout << "adrp_imm: " << std::hex << adrp_imm << '\n';
   std::cout << "adrp_base: " << std::hex << adrp_base << '\n';
+
+  assert(adrp_insn == 0xb0000e28);
+  assert(adrp_immlo == 0x1);
+  assert(adrp_immhi == 0x1c4);
+  assert(adrp_imm == 0x1c5000);
 
   auto found = adrp_base + 0xdb0;
   __pioinfo = (ioinfo**)((uint64_t)dll_base_address + 0x001d8db0);
