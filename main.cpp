@@ -144,9 +144,9 @@ static void set_pioinfo_extra(void) {
   const int max_num_inst = 500;
   uint32_t* start = (uint32_t*)p;
   uint32_t* end_limit = (start + max_num_inst);
-  uint32_t* rip = start;
+  uint32_t* pc = start;
 
-#define IS_INSN(rip, name) ((*(rip) & name##_mask) == name##_id)
+#define IS_INSN(pc, name) ((*(pc) & name##_mask) == name##_id)
 /* N_LEAST_BITS(3) == 0b111 */
 #define N_LEAST_BITS(num_bits) (~(~(uint64_t)0 << num_bits))
 
@@ -158,26 +158,26 @@ static void set_pioinfo_extra(void) {
   /* end of function */
   const uint32_t ret_id= 0xd65f0000;
   const uint32_t ret_mask = 0xfffffc1f;
-  for(; rip < end_limit; rip++) {
-      if (IS_INSN(rip, ret)) {
+  for(; pc < end_limit; pc++) {
+      if (IS_INSN(pc, ret)) {
           break;
       }
   }
-  if (rip == end_limit) {
+  if (pc == end_limit) {
     fprintf(stderr, "end of _isatty not found in " UCRTBASE "\n");
     _exit(1);
   }
-  std::cout << "end is " << std::hex << offset(rip) << '\n';
+  std::cout << "end is " << std::hex << offset(pc) << '\n';
 
   /* pioinfo instruction mark */
   const uint32_t adrp_id = 0x90000000;
   const uint32_t adrp_mask = 0x9f000000;
-  for(; rip > start; rip--) {
-      if (IS_INSN(rip, adrp)) {
+  for(; pc > start; pc--) {
+      if (IS_INSN(pc, adrp)) {
           break;
       }
   }
-  if(rip == start) {
+  if(pc == start) {
     fprintf(stderr, "pioinfo mark not found in " UCRTBASE "\n");
     _exit(1);
   }
@@ -187,13 +187,13 @@ static void set_pioinfo_extra(void) {
    * add	x8, x8, #0xdb0
    * https://devblogs.microsoft.com/oldnewthing/20220809-00/?p=106955
    */
-  uint32_t adrp_insn = *rip;
+  uint32_t adrp_insn = *pc;
   const uint32_t adrp_immhi = (adrp_insn & 0x00ffffe0) >> 5;
   const uint32_t adrp_immlo = (adrp_insn & 0x60000000) >> (5 + 19 + 5);
   /* imm = immhi:immlo:Zeros(12), 64 */
   const uint64_t adrp_imm = ((adrp_immhi << 2) | adrp_immlo) << 12;
   /* base = PC64<63:12>:Zeros(12) */
-  const uint64_t adrp_base = (uint64_t)rip & 0xfffffffffffff000;
+  const uint64_t adrp_base = (uint64_t)pc & 0xfffffffffffff000;
 
   auto found = adrp_base + adrp_imm + 0xdb0;
   __pioinfo = (ioinfo**)((uint64_t)dll_base_address + 0x001d8db0);
@@ -202,7 +202,6 @@ static void set_pioinfo_extra(void) {
   assert(found == (uint64_t)__pioinfo);
 
 #else /* _M_ARM64 */
-
   char *pend = p;
 #if defined _WIN64
   int32_t rel;
