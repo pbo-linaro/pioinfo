@@ -141,14 +141,11 @@ static void set_pioinfo_extra(void) {
   /* _osfile(fh) & FDEV */
 
 #ifdef _M_ARM64
+#define IS_INSN(pc, name) ((*(pc) & name##_mask) == name##_id)
   const int max_num_inst = 500;
   uint32_t* start = (uint32_t*)p;
   uint32_t* end_limit = (start + max_num_inst);
   uint32_t* pc = start;
-
-#define IS_INSN(pc, name) ((*(pc) & name##_mask) == name##_id)
-/* N_LEAST_BITS(3) == 0b111 */
-#define N_LEAST_BITS(num_bits) (~(~(uint64_t)0 << num_bits))
 
   if (!p) {
     fprintf(stderr, "_isatty proc not found in " UCRTBASE "\n");
