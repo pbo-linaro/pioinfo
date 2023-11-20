@@ -185,6 +185,7 @@ static void set_pioinfo_extra(void) {
    * adrp	x8, 0x1801d8000
    * add	x8, x8, #0xdb0
    * https://devblogs.microsoft.com/oldnewthing/20220809-00/?p=106955
+   * The last adrp/add sequence before ret is what we are looking for.
    */
   const uint32_t adrp_insn = *pc;
   const uint32_t adrp_immhi = (adrp_insn & 0x00ffffe0) >> 5;
